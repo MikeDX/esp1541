@@ -371,7 +371,7 @@ void Drive::Reset()
 	UE3Counter = 0;
 #if defined(EXPERIMENTALZERO)
 	ResetEncoderDecoder(18 * 16, 4 * 16);
-	cyclesLeftForBit = ceil(cyclesPerBit - cyclesForBit);
+	cyclesLeftForBit = ceili(cyclesPerBit - cyclesForBit);
 #else
 	ResetEncoderDecoder(18.0f, 22.0f);
 #endif
@@ -655,7 +655,7 @@ void Drive::DriveLoopReadNoFlux()
 			cyclesLeftForBit = cyclesPerBitInt + (cyclesForBitErrorCounter < cyclesPerBitErrorConstant);
 
 			//cyclesForBit -= cyclesPerBit;
-			//cyclesLeftForBit = ceil(cyclesPerBit - cyclesForBit);
+			//cyclesLeftForBit = ceili(cyclesPerBit - cyclesForBit);
 			//cyclesForBit += cyclesLeftForBit;
 
 			if (GetNextBit())

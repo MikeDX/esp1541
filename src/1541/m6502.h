@@ -2,6 +2,18 @@
 // Copyright(C) 2018 Stephen White
 //
 // This file is part of Pi1541.
+
+#ifdef __ESP32__
+#ifdef NOP
+#undef NOP  /* ESP32/Arduino defines NOP macro, conflicts with M6502::NOP */
+#endif
+#ifdef BIT
+#undef BIT  /* ESP32 defines BIT macro, conflicts with M6502::BIT */
+#endif
+#ifdef DEC
+#undef DEC  /* Arduino defines DEC macro, conflicts with M6502::DEC */
+#endif
+#endif
 // 
 // Pi1541 is free software : you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

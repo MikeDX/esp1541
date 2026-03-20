@@ -5,14 +5,17 @@
 #ifndef ESP32_GPIO_H
 #define ESP32_GPIO_H
 
-#include <Arduino.h>
+#include <stdint.h>
 #include <driver/gpio.h>
+#include <esp_timer.h>
 
 // Token constants for Pi1541 compatibility (addr is ignored, we dispatch by constant)
 #define ARM_GPIO_GPLEV0   0x7E200034
 #define ARM_GPIO_GPCLR0   0x7E200028
 #define ARM_GPIO_GPSET0   0x7E20001C
 #define ARM_GPIO_GPFSEL1  0x7E200004
+#define ARM_GPIO_GPPUD    0x7E200094
+#define ARM_GPIO_GPPUDCLK0 0x7E200098
 
 // System timer - use micros() for cycle timing
 #define ARM_SYSTIMER_CLO  0x7E200004
@@ -37,15 +40,20 @@ static inline uint32_t read32(uint32_t addr)
         return val;
     }
     if (addr == ARM_SYSTIMER_CLO) {
-        return (uint32_t)micros();
+        return (uint32_t)(esp_timer_get_time());
     }
     return 0;
 }
 
 static inline void write32(uint32_t addr, uint32_t val)
 {
+    (void)val;
+    if (addr == ARM_GPIO_GPPUD || addr == ARM_GPIO_GPPUDCLK0) {
+        return;  /* No-op for pull-up/down on ESP32 */
+    }
     if (addr == ARM_GPIO_GPCLR0) {
         if (val & (1u << ESP32_PIN_ATN))   gpio_set_level((gpio_num_t)ESP32_PIN_ATN, 0);
+        if (val & (1u << 2))               gpio_set_level((gpio_num_t)2, 0);  /* LED */
         if (val & (1u << ESP32_PIN_CLK))    gpio_set_level((gpio_num_t)ESP32_PIN_CLK, 0);
         if (val & (1u << ESP32_PIN_DATA))   gpio_set_level((gpio_num_t)ESP32_PIN_DATA, 0);
         if (val & (1u << ESP32_PIN_RESET))  gpio_set_level((gpio_num_t)ESP32_PIN_RESET, 0);

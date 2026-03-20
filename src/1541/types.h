@@ -2,8 +2,7 @@
 #define types_h
 
 #include <stddef.h>
-//#include <uspi/types.h>
-//#include "integer.h"
+#include "integer.h"
 
 //typedef unsigned long long	u64;
 

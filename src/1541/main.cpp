@@ -18,7 +18,15 @@
 
 #include "defs.h"
 #include <string.h>
+#if defined(__ESP32__)
+#include <esp_attr.h>
+#endif
 #include <strings.h>
+#include "integer.h"
+#if defined(__ESP32__)
+#include "rpi-aux.h"
+#include <Arduino.h>
+#endif
 //#include "Timer.h"
 #include "ROMs.h"
 #include "stb_image.h"
@@ -88,7 +96,11 @@ typedef void(*func_ptr)();
 
 const long int tempBufferSize = 1024;
 char tempBuffer[tempBufferSize];
+#if defined(__ESP32__)
+ROMs roms EXT_RAM_ATTR;
+#else
 ROMs roms;
+#endif
 
 const long int CBMFont_size = 4096;
 unsigned char CBMFontData[4096];
@@ -97,7 +109,11 @@ unsigned char* CBMFont = 0;
 #define LCD_LOGO_MAX_SIZE 1024
 uint8_t LcdLogoFile[LCD_LOGO_MAX_SIZE];
 
+#ifdef __ESP32__
+uint8_t* s_u8Memory = nullptr;  /* allocated in esp1541_init from PSRAM */
+#else
 uint8_t s_u8Memory[0xc000];
+#endif
 
 int numberOfUSBMassStorageDevices = 0;
 DiskCaddy diskCaddy;
@@ -105,13 +121,19 @@ Pi1541 pi1541;
 #if defined(PI1581SUPPORT)
 Pi1581 pi1581;
 #endif
+#if not defined(__ESP32__)
 CEMMCDevice	m_EMMC;
+#endif
 Screen screen;
 ScreenLCD* screenLCD = 0;
 Options options;
 const char* fileBrowserSelectedName;
 uint8_t deviceID = 8;
+#if defined(__ESP32__)
+IEC_Commands m_IEC_Commands EXT_RAM_ATTR;
+#else
 IEC_Commands m_IEC_Commands;
+#endif
 InputMappings* inputMappings;
 #if not defined(EXPERIMENTALZERO)
 Keyboard* keyboard;
@@ -1716,7 +1738,11 @@ void Reboot_Pi()
 {
 	if (screenLCD)
 		screenLCD->ClearInit(0);
+#if defined(__ESP32__)
+	ESP.restart();
+#else
 	reboot_now();
+#endif
 }
 
 bool SwitchDrive(const char* drive)
@@ -1869,6 +1895,10 @@ extern "C"
 {
 	void kernel_main(unsigned int r0, unsigned int r1, unsigned int atags)
 	{
+#if defined(__ESP32__)
+		(void)r0;(void)r1;(void)atags;
+		return;  /* ESP32 uses esp1541_init + emulator(), not kernel_main */
+#else
 		FRESULT res;
 		FATFS fileSystemSD;
 		FATFS fileSystemUSB[16];
@@ -1998,6 +2028,7 @@ extern "C"
 #endif
 #ifndef USE_MULTICORE
 		emulator();	// If only one core the emulator runs on it now.
+#endif
 #endif
 	}
 }

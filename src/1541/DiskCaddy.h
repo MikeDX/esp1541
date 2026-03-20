@@ -49,6 +49,10 @@ public:
 
 	bool Insert(const FILINFO* fileInfo, bool readOnly);
 
+#if defined(__ESP32__)
+	bool InsertFromBuffer(const char* filename, uint8_t* data, size_t size, bool readOnly);
+#endif
+
 	DiskImage* GetCurrentDisk()
 	{
 #if defined(EXPERIMENTALZERO)

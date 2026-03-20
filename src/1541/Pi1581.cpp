@@ -24,7 +24,6 @@
 #include "debug.h"
 
 extern Pi1581 pi1581;
-extern uint8_t s_u8Memory[0xc000];
 extern ROMs roms;
 
 // PA0 SIDE0

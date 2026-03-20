@@ -48,6 +48,18 @@ void Screen::Open(uint32_t widthDesired, uint32_t heightDesired, uint32_t colour
 	if (heightDesired > 720)
 		heightDesired = 720;
 
+#if defined(__ESP32__)
+	scaleX = (float)widthDesired / 1024.0f;
+	scaleY = (float)heightDesired / 768.0f;
+	width = widthDesired;
+	height = heightDesired;
+	bpp = colourDepth;
+	framebuffer = 0;
+	plotPixelFn = &Screen::PlotPixel16;
+	opened = true;
+	return;
+#endif
+
 	rpi_mailbox_property_t* mp;
 	//int width = 0;
 	//int height = 0;

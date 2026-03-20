@@ -20,12 +20,16 @@
 #include "debug.h"
 #include <string.h>
 #include <stdlib.h>
+#include <cstdio>
 #include "ff.h"
 
+#if not defined(__ESP32__)
 extern "C"
 {
 //#include "rpi-gpio.h"	// For SetACTLed
 }
+#endif
+
 
 extern uint8_t deviceID;
 
@@ -121,6 +125,12 @@ bool DiskCaddy::Empty()
 
 bool DiskCaddy::Insert(const FILINFO* fileInfo, bool readOnly)
 {
+#if defined(__ESP32__)
+	// ESP32 uses InsertFromBuffer with ram_disk - no FatFS
+	(void)fileInfo;
+	(void)readOnly;
+	return false;
+#else
 	int x;
 	int y;
 	bool success;
@@ -204,7 +214,34 @@ bool DiskCaddy::Insert(const FILINFO* fileInfo, bool readOnly)
 	oldCaddyIndex = 0;
 
 	return success;
+#endif
 }
+
+#if defined(__ESP32__)
+bool DiskCaddy::InsertFromBuffer(const char* filename, uint8_t* data, size_t size, bool readOnly)
+{
+	if (!data || size == 0) return false;
+	FILINFO fi = {};
+	strncpy(fi.fname, filename ? filename : "disk.d64", sizeof(fi.fname) - 1);
+	fi.fname[sizeof(fi.fname) - 1] = '\0';
+	fi.fsize = size;
+	fi.fattrib = 0;
+	DiskImage::DiskType diskType = DiskImage::GetDiskImageTypeViaExtention(fi.fname);
+	bool success = false;
+	switch (diskType) {
+		case DiskImage::D64: success = InsertD64(&fi, data, size, readOnly); break;
+		case DiskImage::G64: success = InsertG64(&fi, data, size, readOnly); break;
+		case DiskImage::NIB: success = InsertNIB(&fi, data, size, readOnly); break;
+		case DiskImage::NBZ: success = InsertNBZ(&fi, data, size, readOnly); break;
+		case DiskImage::D81: success = InsertD81(&fi, data, size, readOnly); break;
+		case DiskImage::T64: success = InsertT64(&fi, data, size, readOnly); break;
+		case DiskImage::PRG: success = InsertPRG(&fi, data, size, readOnly); break;
+		default: break;
+	}
+	if (success) Debug_printf("Mounted from RAM: %s - %u bytes\r\n", fi.fname, (unsigned)size);
+	return success;
+}
+#endif
 
 bool DiskCaddy::InsertD64(const FILINFO* fileInfo, unsigned char* diskImageData, unsigned size, bool readOnly)
 {

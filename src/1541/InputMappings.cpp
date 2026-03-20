@@ -21,11 +21,15 @@
 #include "FileBrowser.h"
 #include "iec_bus.h"
 #include "debug.h"
+#if defined(__ESP32__)
+#include "rpi-aux.h"
+#else
 extern "C"
 {
 #include "rpi-aux.h"
 extern void usDelay(unsigned nMicroSeconds);
 }
+#endif
 extern void Reboot_Pi(void);
 
 // If disk swaps can be done via multiple cores then directDiskSwapRequest needs to be volatile. WARNING: volatile acesses can be very expensive.

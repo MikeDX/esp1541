@@ -16,6 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Pi1541. If not, see <http://www.gnu.org/licenses/>.
 
+#include "defs.h"
 #include "Pi1541.h"
 #include "debug.h"
 #include "options.h"
@@ -23,7 +24,6 @@
 
 extern Options options;
 extern Pi1541 pi1541;
-extern uint8_t s_u8Memory[0xc000];
 extern ROMs roms;
 
 ///////////////////////////////////////////////////////////////////////////////////////

@@ -10,16 +10,34 @@
 typedef int rpi_gpio_pin_t;
 
 // ESP32 IEC bus pin mapping (non-split, 4 pins to level shifters)
-enum PIGPIO_ESP32 {
+enum PIGPIO {
     PIGPIO_ATN   = 12,
     PIGPIO_CLOCK = 13,
     PIGPIO_DATA  = 14,
     PIGPIO_RESET = 15,
+    PIGPIO_SRQ   = 19,      // unused
     PIGPIO_OUT_LED   = 2,   // Built-in LED
     PIGPIO_OUT_SOUND = 4,   // Unused when SoundOnGPIO=false
+    // Button pins (no physical buttons - use dummy pins)
+    PIGPIO_IN_BUTTON1 = 27,
+    PIGPIO_IN_BUTTON2 = 22,
+    PIGPIO_IN_BUTTON3 = 23,
+    PIGPIO_IN_BUTTON4 = 4,
+    PIGPIO_IN_BUTTON5 = 5,
+    PIGPIO_IN_ATN = 12,
+    PIGPIO_IN_DATA = 14,
+    PIGPIO_IN_CLOCK = 13,
+    PIGPIO_IN_SRQ = 19,
+    PIGPIO_IN_RESET = 15,
+    PIGPIO_OUT_ATN = 12,
+    PIGPIO_OUT_CLOCK = 13,
+    PIGPIO_OUT_DATA = 14,
+    PIGPIO_OUT_SRQ = 19,
+    PIGPIO_OUT_SPI0_RS = 6,
 };
 
 // Rotary encoder pins (disabled on ESP32)
+#define RPI_GPIO0   0
 #define RPI_GPIO22  22
 #define RPI_GPIO23  23
 #define RPI_GPIO27  27

@@ -70,4 +70,11 @@
 #define TEST3_MASK   (1 << TEST3_PIN)
 #endif
 
+// 1541 emulated RAM - on ESP32 allocated from PSRAM to save internal DRAM
+#ifdef __ESP32__
+extern uint8_t* s_u8Memory;
+#else
+extern uint8_t s_u8Memory[0xc000];
+#endif
+
 #endif

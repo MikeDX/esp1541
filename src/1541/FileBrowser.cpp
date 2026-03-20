@@ -18,6 +18,15 @@
 
 #include "FileBrowser.h"
 #include <stdlib.h>
+#if defined(__ESP32__)
+#include <esp_heap_caps.h>
+#ifndef MALLOC_CAP_SPIRAM
+#define MALLOC_CAP_SPIRAM  (1 << 3)
+#endif
+#ifndef MALLOC_CAP_8BIT
+#define MALLOC_CAP_8BIT    (1 << 4)
+#endif
+#endif
 #include <string.h>
 #include <strings.h>
 #include <algorithm>

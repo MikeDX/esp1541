@@ -1,0 +1,3 @@
+# Allow BSS variables with EXT_RAM_ATTR to go in PSRAM
+# Required for ESP1541 - reduces internal DRAM usage by ~150KB+
+CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY=y

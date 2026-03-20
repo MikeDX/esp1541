@@ -33,7 +33,9 @@
 
 #include "wd177x.h"
 #include "debug.h"
-
+#if defined(__ESP32__)
+#include <esp_attr.h>
+#endif
 #include "Pi1581.h"
 
 // Clocks
@@ -238,7 +240,11 @@ void WD177x::UpdateCommandType1()
 	}
 }
 
+#if defined(__ESP32__)
+unsigned char sb[512 * 50] EXT_RAM_ATTR;
+#else
 unsigned char sb[512 * 50];
+#endif
 int sbo = 0;
 
 void WD177x::UpdateCommandType2()

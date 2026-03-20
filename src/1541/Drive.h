@@ -24,7 +24,7 @@
 #include <stdlib.h>
 
 #if defined(EXPERIMENTALZERO)
-inline int ceil(float num) {
+inline int ceili(float num) {
 	int inum = (int)num;
 	if (num == (float)inum) {
 		return inum;

@@ -28,6 +28,9 @@
 #ifndef DM_ROTARY_H
 #define DM_ROTARY_H
 
+#if defined(__ESP32__)
+#include "rpi-gpio.h"
+#endif
 extern "C"
 {
 //    #include "rpi-aux.h"

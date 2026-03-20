@@ -27,11 +27,20 @@
 #include "lz.h"
 #include "Petscii.h"
 //#include <malloc.h>
+#if defined(__ESP32__)
 #include <esp_heap_caps.h>
+#ifndef MALLOC_CAP_SPIRAM
+#define MALLOC_CAP_SPIRAM  (1 << 3)
+#endif
+#endif
+#if defined(__ESP32__)
+#include "rpi-gpio.h"
+#else
 extern "C"
 {
 #include "rpi-gpio.h"
 }
+#endif
 
 extern uint32_t HashBuffer(const void* pBuffer, uint32_t length);
 
@@ -64,9 +73,18 @@ static uint8_t blankD64DIRBAM[] =
 	//	0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+#ifdef __ESP32__
+unsigned char* DiskImage::readBuffer = nullptr;
+static unsigned char* compressionBuffer = nullptr;
+#define COMPRESSION_BUFFER_SIZE (HALF_TRACK_COUNT * MAX_TRACK_LENGTH)
+void DiskImage::InitESP32Buffers(void) {
+	readBuffer = (unsigned char*)heap_caps_malloc(READBUFFER_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+	compressionBuffer = (unsigned char*)heap_caps_malloc(COMPRESSION_BUFFER_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+}
+#else
 unsigned char DiskImage::readBuffer[READBUFFER_SIZE];
-
 static unsigned char compressionBuffer[HALF_TRACK_COUNT * MAX_TRACK_LENGTH];
+#endif
 
 static const unsigned short SECTOR_LENGTH = 256;
 static const unsigned short SECTOR_LENGTH_WITH_CHECKSUM = 260;

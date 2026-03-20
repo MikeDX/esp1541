@@ -190,7 +190,15 @@ public:
 
 	bool IsDirty() const { return dirty; }
 
+#ifdef __ESP32__
+	static unsigned char* readBuffer;  /* allocated from PSRAM in DiskImage_InitESP32 */
+#else
 	static unsigned char readBuffer[READBUFFER_SIZE];
+#endif
+
+#ifdef __ESP32__
+	static void InitESP32Buffers();  /* call before first use - allocates readBuffer from PSRAM */
+#endif
 
 	static void CRC(unsigned short& runningCRC, unsigned char data);
 

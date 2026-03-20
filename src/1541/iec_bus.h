@@ -24,8 +24,12 @@
 #include "m6522.h"
 #include "m8520.h"
 
+#if defined(__ESP32__)
+#include "rpi-gpio.h"
+#else
 //#include "rpi-gpio.h"
 //#include "rpiHardware.h"
+#endif
 
 //ROTARY: Added for rotary encoder support - 09/05/2019 by Geo...
 #include "dmRotary.h"
@@ -75,7 +79,9 @@
 // SRQ is a little bit different.
 // The 1581 does not pull it high. Only the 128 pulls it high.
 // 
-#if defined(HAS_40PINS)
+#if defined(__ESP32__)
+// PIGPIO enum from rpi_gpio_stub.h
+#elif defined(HAS_40PINS)
 enum PIGPIO
 {
 	// Original Non-split lines
@@ -213,7 +219,11 @@ static int buttonCount = sizeof(ButtonPinFlags) / sizeof(unsigned);
 //	9	8	7	6	5	4	3	2	1	0
 // 000 000 000 000 000 000 000 001 000 000
 // To support NIBTools ATN can be made an output as well
+#if defined(__ESP32__)
+static const uint32_t PI_OUTPUT_MASK_GPFSEL0 = 0xFFFFFFFF;  /* ESP32: not used */
+#else
 static const uint32_t PI_OUTPUT_MASK_GPFSEL0 = ~((1 << (PIGPIO_ATN * 3)));
+#endif
 //GPFSEL1           RX  TX
 //	19	18	17	16	15	14	13	12	11	10
 // 000 001 001 000 000 000 000 000 000 000	(bits 21 and 24 for GPIO 17 and 18 as outputs)

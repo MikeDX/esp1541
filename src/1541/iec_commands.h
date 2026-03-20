@@ -19,6 +19,9 @@
 #ifndef IEC_COMMANDS_H
 #define IEC_COMMANDS_H
 
+#if defined(__ESP32__)
+#include "rpi-aux.h"
+#endif
 #include "iec_bus.h"
 #include "ff.h"
 #include "debug.h"
@@ -42,7 +45,11 @@ struct TimerMicroSeconds
 
 	bool Tick()
 	{
+#if defined(__ESP32__)
+		usDelay(1);
+#else
 		delay_us(1);
+#endif
 		count++;
 		return TimedOut();
 	}
