@@ -36,3 +36,15 @@ Examples: `s_u8Memory` in `esp1541_init`, `DiskImage::InitESP32Buffers()`, `wd17
 ## IEC GPIO
 
 See **`src/esp32_hal/rpi_gpio_stub.h`** — single place to change pins for your PCB.
+
+## Build: `WebHandlerImpl.h: No such file or directory`
+
+That came from a **bad or half-installed** old **ESP Async WebServer 1.2.x** tree. This repo now depends on **`me-no-dev/ESPAsyncWebServer` ^3.6.x** (uses **ESP32Async/AsyncTCP**), which avoids that layout.
+
+If you still see missing headers after pulling:
+
+```bash
+pio run -e esp1541-s3 -t fullclean
+rm -rf .pio/libdeps
+pio run -e esp1541-s3
+```
