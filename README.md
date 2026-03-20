@@ -12,11 +12,11 @@ This repo is **not** FujiNet; it is focused on the C64 **IEC serial bus** and 15
 |------|--------|
 | **Web disk loader** | **Works.** ESP32 creates AP `ESP1541` (password `15411541`). Browser at `http://192.168.4.1` uploads D64/G64 into PSRAM (4 slots × 512 KB). |
 | **PlatformIO builds** | **Works** for `esp1541` (classic ESP32-WROVER) and **`esp1541-s3`** (ESP32-S3 + PSRAM). |
-| **Pi1541 core (`src/1541/`)** | **Present but not linked** in default builds. The upstream codebase is large; linking it on classic ESP32 overflowed internal DRAM (~176 KB over). |
-| **IEC bus → C64** | **HAL started** (`src/esp32_hal/`, GPIO mapping in `rpi_gpio_stub.h`). Full emulation loop is wired in `main_esp1541.cpp` + `kernel_main` paths but **disabled** until the firmware fits RAM cleanly. |
+| **Pi1541 core (`src/1541/`)** | **Linked** in the default **`esp1541-s3`** build (ESP32-S3 + PSRAM). The lighter **`esp1541`** env still omits `1541/` for classic ESP32 DRAM limits. |
+| **IEC bus → C64** | **HAL in place** (`src/esp32_hal/`, `rpi_gpio_stub.h`). **`esp1541-s3`** is intended to run full 1541 emulation on the bus after ROM + disk are loaded (see `README_ESP1541.md`). |
 | **1541 ROM** | Intended flow: upload **16 KB 1541 ROM** via web (`ram_rom`); see `main_esp1541.cpp`. You must supply your own legally obtained ROM. |
 
-**Bottom line:** you can **flash and use the web loader** today. **Drive emulation on the IEC bus** is the active integration goal; **ESP32-S3 with PSRAM** is the recommended platform for the next step (more internal RAM + faster PSRAM than original ESP32).
+**Bottom line:** you can **flash and use the web loader** today; **`esp1541-s3`** also builds **full Pi1541** for IEC drive emulation (see `README_ESP1541.md`). **ESP32-S3 with PSRAM** is the recommended platform for that path.
 
 ---
 
@@ -56,6 +56,21 @@ Shared settings live under the unnamed `[env]` section in `platformio.ini` (libr
   | RESET  | 15 |
 
 Change pins in one place there if your PCB differs.
+
+### What else uses the IEC bus? (future ideas)
+
+The **Commodore serial (IEC) bus** is not only for floppy drives. Other device numbers on the same
+**ATN / CLOCK / DATA** lines include:
+
+| Kind | Typical device # | Notes |
+|------|------------------|--------|
+| **Disk drives** | 8–11 (often 8–9) | What Pi1541 / ESP1541 target first (1541, 1571, 1581-class behaviour). |
+| **Printers** | 4–5 (common) | `OPEN`/`PRINT#` to a serial printer (e.g. MPS-801 style). **Emulation** could send text or ESC/P to WiFi/HTML/PDF—handy if you want listings or program output without hardware; audience is smaller than disk emulation. |
+| **Plotters / rare peripherals** | varies | Less common on the C64; same protocol family. |
+| **“Smart” interfaces** | varies | Some CMD/SD2IEC-style devices speak extensions; much more work than a 1541. |
+
+**SRQ** (Serial IRQ) exists on the IEC connector but is **unused** on many C64 setups; full printer
+or multi-device tricks sometimes care about timing and secondary addresses more than extra wires.
 
 ---
 
