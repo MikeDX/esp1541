@@ -26,6 +26,9 @@
 #if defined(__ESP32__)
 #include "rpi-aux.h"
 #include <Arduino.h>
+#include "web_disk.h"
+#include "ram_disk.h"
+#include "ram_rom.h"
 #endif
 //#include "Timer.h"
 #include "ROMs.h"
@@ -1269,7 +1272,35 @@ void emulator()
 	m_IEC_Commands.SetLowercaseBrowseModeFilenames(options.LowercaseBrowseModeFilenames());
 	m_IEC_Commands.SetNewDiskType(options.GetNewDiskType());
 
+#if defined(__ESP32__)
+	/* Headless: no SD / on-screen file browser — wait for ROM + disk via WiFi, then run 1541 */
+	while (!roms.ROMValid[0]) {
+		if (ram_rom_loaded()) {
+			memcpy(roms.ROMImages[0], ram_rom_get(), ROMs::ROM_SIZE);
+			strncpy(roms.ROMNames[0], "web.rom", 255);
+			roms.ROMValid[0] = true;
+			Debug_printf("ESP1541: 1541 ROM loaded (16384 bytes)\r\n");
+		}
+		web_disk_loop();
+		delay(20);
+	}
+	while (diskCaddy.GetNumberOfImages() == 0) {
+		ram_disk_slot_t* st = ram_disk_get_slot(0);
+		if (st && st->loaded && st->data && st->size > 0) {
+			if (diskCaddy.InsertFromBuffer(st->filename, st->data, st->size, false))
+				Debug_printf("ESP1541: mounted %s\r\n", st->filename);
+		}
+		web_disk_loop();
+		delay(20);
+	}
+	emulating = BeginEmulating(fileBrowser, "esp1541");
+	if (emulating != EMULATING_1541) {
+		Debug_printf("ESP1541: BeginEmulating failed\r\n");
+		while (1) { delay(1000); }
+	}
+#else
 	emulating = IEC_COMMANDS;
+#endif
 	while (1)
 	{
 		if (emulating == IEC_COMMANDS)

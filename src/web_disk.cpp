@@ -1,5 +1,6 @@
 #include "web_disk.h"
 #include "ram_disk.h"
+#include "ram_rom.h"
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
@@ -29,11 +30,18 @@ static const char* upload_html = R"rawliteral(
   </style>
 </head>
 <body>
-  <h1>ESP1541 Disk Loader</h1>
-  <p>Upload D64 or G64 disk images. They load into RAM.</p>
+  <h1>ESP1541</h1>
+  <p><strong>1541 emulation:</strong> upload a <strong>16&nbsp;KB 1541 ROM</strong> once, then a <strong>D64/G64</strong> disk. Connect the C64 IEC bus (level shifters).</p>
+  <form id="romForm">
+    <label>1541 ROM (16384 bytes)</label><br>
+    <input type="file" id="romInput" accept=".rom,.bin,.ROM,.BIN">
+    <button type="submit">Upload ROM</button>
+  </form>
+  <hr>
   <form id="uploadForm">
+    <label>Disk image</label><br>
     <input type="file" id="fileInput" accept=".d64,.g64,.D64,.G64">
-    <button type="submit">Load into drive</button>
+    <button type="submit">Load disk into RAM</button>
   </form>
   <div id="slots"></div>
   <div class="status" id="status"></div>
@@ -48,6 +56,18 @@ static const char* upload_html = R"rawliteral(
         ).join('');
       } catch(e) { document.getElementById('status').textContent = 'Error: ' + e; }
     }
+    document.getElementById('romForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const file = document.getElementById('romInput').files[0];
+      if (!file) { document.getElementById('status').textContent = 'Select a ROM file'; return; }
+      document.getElementById('status').textContent = 'Uploading ROM...';
+      try {
+        const buf = await file.arrayBuffer();
+        const r = await fetch('/upload/rom', { method: 'POST', body: buf });
+        const j = await r.json();
+        document.getElementById('status').textContent = j.ok ? 'ROM OK — power-cycle or wait for emulator' : ('ROM error: ' + (j.msg || ''));
+      } catch(err) { document.getElementById('status').textContent = 'Error: ' + err; }
+    };
     document.getElementById('uploadForm').onsubmit = async (e) => {
       e.preventDefault();
       const file = document.getElementById('fileInput').files[0];
@@ -89,6 +109,30 @@ void web_disk_setup(void) {
     json += "]";
     req->send(200, "application/json", json);
   });
+
+  server.on("/upload/rom", HTTP_POST, [](AsyncWebServerRequest* req) {},
+    nullptr,
+    [](AsyncWebServerRequest* req, uint8_t* data, size_t len, size_t index, size_t total) {
+      static uint8_t* rom_buf = nullptr;
+      static size_t rom_sz = 0;
+      if (index == 0) {
+        if (rom_buf) free(rom_buf);
+        rom_buf = (uint8_t*)malloc(total);
+        rom_sz = 0;
+      }
+      if (rom_buf && len > 0 && rom_sz + len <= total) {
+        memcpy(rom_buf + rom_sz, data, len);
+        rom_sz += len;
+      }
+      if (index + len >= total && rom_buf) {
+        bool ok = (rom_sz == RAM_ROM_SIZE) && ram_rom_load(rom_buf, rom_sz);
+        free(rom_buf);
+        rom_buf = nullptr;
+        req->send(200, "application/json",
+          ok ? "{\"ok\":true}" : "{\"ok\":false,\"msg\":\"must be exactly 16384 bytes\"}");
+      }
+    }
+  );
 
   server.on("/upload", HTTP_POST, [](AsyncWebServerRequest* req) {},
     nullptr,

@@ -2,7 +2,10 @@
 #define DEFS_H
 
 #include "debug.h"
+/* 1581 / D81 path pulls wd177x + large buffers; omit on ESP32 to save DRAM */
+#if !defined(__ESP32__)
 #define PI1581SUPPORT 1
+#endif
 // Indicates a Pi with the 40 pin GPIO connector
 // so that additional functionality (e.g. test pins) can be enabled
 #if defined(RPIZERO) || defined(RPI1BPLUS) || defined(RPI2) || defined(RPI3)

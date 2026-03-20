@@ -72,6 +72,8 @@ void esp1541_init(void) {
   static char opts[] = "disableSD2IECCommands=1\nonResetChangeToStartingFolder=1\n";
   options.Process(opts);
 
+  screen.Open(options.ScreenWidth(), options.ScreenHeight(), 16);
+
   // Load ROM from ram_rom if uploaded via web
   if (ram_rom_loaded()) {
     memcpy(roms.ROMImages[0], ram_rom_get(), ROMs::ROM_SIZE);

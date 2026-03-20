@@ -193,7 +193,8 @@ public:
 	void ClearScreen();
 
 	static const long int LSTBuffer_size = 1024 * 8;
-	static unsigned char LSTBuffer[];
+	/** LST file scratch (8KB); on ESP32 allocated in PSRAM to save internal DRAM. */
+	static unsigned char* LSTBufferData();
 
 	static uint32_t Colour(int index);
 

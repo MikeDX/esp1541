@@ -55,7 +55,25 @@ extern void CheckAutoMountImage(EXIT_TYPE reset_reason , FileBrowser* fileBrowse
 extern bool SwitchDrive(const char* drive);
 extern int numberOfUSBMassStorageDevices;
 
-unsigned char FileBrowser::LSTBuffer[FileBrowser::LSTBuffer_size];
+#if defined(__ESP32__)
+unsigned char* FileBrowser::LSTBufferData()
+{
+	static unsigned char* buf = nullptr;
+	if (!buf)
+	{
+		buf = (unsigned char*)heap_caps_malloc(LSTBuffer_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+		if (!buf)
+			buf = (unsigned char*)malloc(LSTBuffer_size);
+	}
+	return buf;
+}
+#else
+static unsigned char s_lstBuffer[FileBrowser::LSTBuffer_size];
+unsigned char* FileBrowser::LSTBufferData()
+{
+	return s_lstBuffer;
+}
+#endif
 
 static const uint32_t palette[] = 
 {
@@ -1350,15 +1368,21 @@ bool FileBrowser::SelectLST(const char* filenameLST)
 		res = f_open(&fp, filenameLST, FA_READ);
 		if (res == FR_OK)
 		{
+			unsigned char* lstBuf = FileBrowser::LSTBufferData();
+			if (!lstBuf)
+			{
+				f_close(&fp);
+				return false;
+			}
 			uint32_t bytesRead;
 			SetACTLed(true);
-			f_read(&fp, FileBrowser::LSTBuffer, FileBrowser::LSTBuffer_size, &bytesRead);
+			f_read(&fp, lstBuf, FileBrowser::LSTBuffer_size, &bytesRead);
 			SetACTLed(false);
 			f_close(&fp);
 
 			TextParser textParser;
 
-			textParser.SetData((char*)FileBrowser::LSTBuffer);
+			textParser.SetData((char*)lstBuf);
 			char* token = textParser.GetToken(true);
 			while (token)
 			{

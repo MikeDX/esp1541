@@ -17,8 +17,8 @@
 #define ARM_GPIO_GPPUD    0x7E200094
 #define ARM_GPIO_GPPUDCLK0 0x7E200098
 
-// System timer - use micros() for cycle timing
-#define ARM_SYSTIMER_CLO  0x7E200004
+/* Must differ from GPFSEL1 — Pi uses 0x7E003004 for system timer CLO */
+#define ARM_SYSTIMER_CLO  0x7E003004UL
 
 // IEC bus pin assignments
 #define ESP32_PIN_ATN     12
@@ -66,7 +66,30 @@ static inline void write32(uint32_t addr, uint32_t val)
         if (val & (1u << ESP32_PIN_RESET)) gpio_set_level((gpio_num_t)ESP32_PIN_RESET, 1);
         return;
     }
-    // ARM_GPIO_GPFSEL1 - direction is set via RPI_SetGpioPinFunction, ignore
+    /* Non-split IEC: Pi toggles GPFSEL1 so DATA/CLOCK are input (released) vs output (pull low) */
+    if (addr == ARM_GPIO_GPFSEL1) {
+        const unsigned clk_pin = ESP32_PIN_CLK;
+        const unsigned data_pin = ESP32_PIN_DATA;
+        unsigned clk_fn = (val >> ((clk_pin - 10u) * 3u)) & 7u;
+        unsigned data_fn = (val >> ((data_pin - 10u) * 3u)) & 7u;
+        gpio_num_t gclk = (gpio_num_t)clk_pin;
+        gpio_num_t gdata = (gpio_num_t)data_pin;
+        if (clk_fn == 1u) {
+            gpio_set_direction(gclk, GPIO_MODE_OUTPUT_OD);
+            gpio_set_level(gclk, 0);
+        } else {
+            gpio_set_direction(gclk, GPIO_MODE_INPUT);
+            gpio_set_pull_mode(gclk, GPIO_FLOATING);
+        }
+        if (data_fn == 1u) {
+            gpio_set_direction(gdata, GPIO_MODE_OUTPUT_OD);
+            gpio_set_level(gdata, 0);
+        } else {
+            gpio_set_direction(gdata, GPIO_MODE_INPUT);
+            gpio_set_pull_mode(gdata, GPIO_FLOATING);
+        }
+        return;
+    }
 }
 
 static inline void RPI_SetGpioPinFunction(int pin, int mode)
